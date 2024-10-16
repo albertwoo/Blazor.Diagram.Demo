@@ -1,0 +1,69 @@
+﻿@typeparam T
+
+<h3 class="font-bold text-lg mb-2">@title</h3>
+<div class="flex flex-col gap-2">
+    @foreach (var (property, parameterAttr) in properties)
+    {
+        var label = parameterAttr.Name ?? property.Name;
+        var value = property.GetValue(NodeModel);
+        var setValue = (object? x) =>
+        {
+            property.SetValue(NodeModel, x);
+            NodeModel.Refresh();
+        };
+
+        <NodeFieldWraper Label="@label">
+            @if (parameterAttr.FieldRenderType != null)
+            {
+                var ps = new Dictionary<string, object?>()
+                {
+                    { nameof(NodeParameterComponentBase<int>.Value), value },
+                    { nameof(NodeParameterComponentBase<int>.ValueChanged), setValue },
+                };
+                <DynamicComponent Type="parameterAttr.FieldRenderType" Parameters="ps" />
+            }
+            else
+            {
+                @if (property.PropertyType == typeof(string))
+                {
+                    @if (parameterAttr.Textarea)
+                    {
+                        <textarea class="join-item textarea textarea-bordered py-2 textarea-sm w-full" style="line-height: 1rem; white-space: nowrap; min-height: 100px;" placeholder="@label"
+                                  value=@value
+                                  @onchange="e => setValue(e.Value?.ToString())">
+                        </textarea>
+                    }
+                    else
+                    {
+                        <input type="text" class="join-item input input-sm input-bordered w-full" placeholder="@label" 
+                               value=@value 
+                               @onchange="e => setValue(e.Value?.ToString())">
+                    }
+                }
+                else if (property.PropertyType == typeof(bool) || property.PropertyType == typeof(bool?))
+                {
+                    <input type="checkbox" class="join-item toggle toggle-primary" checked="@((bool?)value == true)" @onchange="_ => setValue(!(bool?)value!)">
+                }
+                else if (property.PropertyType.IsEnum)
+                {
+                    <select 
+                        value=@(value?.ToString() ?? "") 
+                        @onchange="x => { if (Enum.TryParse(property.PropertyType, x.Value?.ToString(), out var v)) setValue(v); }" 
+                        class="select select-sm select-bordered join-item w-full"
+                    >
+                        @foreach (var item in Enum.GetValues(property.PropertyType))
+                        {
+                            <option value="@item">@item</option>
+                        }
+                    </select>
+                }
+                else if (property.PropertyType == typeof(int) || property.PropertyType == typeof(int?))
+                {
+                    <input type="number" class="join-item input input-sm input-bordered w-full" placeholder="@label" 
+                           value="@value" 
+                           @onchange="e => { int.TryParse(e.Value?.ToString(), out var v); setValue(v); }" />
+                }
+            }
+        </NodeFieldWraper>
+    }
+</div>

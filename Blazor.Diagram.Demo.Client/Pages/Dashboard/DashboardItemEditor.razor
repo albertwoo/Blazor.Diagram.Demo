@@ -1,0 +1,101 @@
+﻿@using Blazor.Diagrams.Core.Models
+@using Blazor.Diagrams.Core.Models.Base
+@using Blazor.Diagrams.Core.Routers
+@using Blazor.Diagram.Demo.Client.Pages.Dashboard.Links
+@using Blazor.Diagram.Demo.Client.Pages.Dashboard.Nodes
+
+@code {
+    [Parameter] public required Model EditingModel { get; set; }
+}
+
+@if (EditingModel is NodeModelBase nodeModel)
+{
+    <NodeEditor NodeModel="@nodeModel" />
+}
+else if (EditingModel is LinkModel linkModel)
+{
+    <div>
+        <h3 class="font-bold text-lg mb-2">Link Editor</h3>
+        <div class="flex flex-col gap-2">
+            @if (linkModel is StyledLinkModel styledLinkModel)
+            {
+                <NodeFieldWraper Label="Color">
+                    <input type="text" class="join-item input input-sm input-bordered w-full" placeholder="Color"
+                           @bind-value="styledLinkModel.Color" @bind-value:after="linkModel.Refresh">
+                </NodeFieldWraper>
+                <NodeFieldWraper Label="Dash">
+                    <input type="number" class="join-item input input-sm input-bordered w-full" placeholder="Dash"
+                           @bind-value="styledLinkModel.Dash" @bind-value:after="linkModel.Refresh">
+                </NodeFieldWraper>
+                @if (styledLinkModel.Dash != 0)
+                {
+                    <NodeFieldWraper Label="Animated">
+                        <div class="join-item border-1px border-slate-200 w-full pb-0 px-3">
+                            <InputCheckbox class="toggle toggle-sm toggle-primary mt-2" placeholder="Dash" @bind-Value="styledLinkModel.Animated" @bind-Value:after="linkModel.Refresh" />
+                        </div>
+                    </NodeFieldWraper>
+                }
+            }
+            <div>
+                <p class="text-slate-700">Line Shape</p>
+                @LinkShapeEditor(linkModel)
+            </div>
+            <div>
+                <p class="text-slate-700">Source Marker</p>
+                @LinkMarkerEditor(linkModel.SourceMarker, x => { linkModel.SourceMarker = x; linkModel.Refresh(); }, optionIdentifier: "source")
+            </div>
+            <div>
+                <p class="text-slate-700">Target Marker</p>
+                @LinkMarkerEditor(linkModel.TargetMarker, x => { linkModel.TargetMarker = x; linkModel.Refresh(); }, optionIdentifier: "target")
+            </div>
+        </div>
+    </div>
+}
+
+
+@code {
+    RenderFragment LinkShapeEditor(LinkModel linkModel)
+    {
+        return @<div class="join w-full">
+            <input class="join-item btn btn-sm flex-1" type="radio" name="link-shape-options" 
+                   aria-label="Curve"
+                   checked="@(linkModel.Router == null || linkModel.Router is NormalRouter)" 
+                   @onclick="_ => {
+                       linkModel.Router = new NormalRouter();
+                       linkModel.PathGenerator = new Blazor.Diagrams.Core.PathGenerators.SmoothPathGenerator();
+                       linkModel.Refresh();
+                   }" 
+            />
+            <input class="join-item btn btn-sm flex-1" type="radio" name="link-shape-options"
+               aria-label="Orthogonal"
+                   checked="@(linkModel.Router is OrthogonalRouter)"
+                   @onclick="_ => {
+                       linkModel.Router = new OrthogonalRouter();
+                       linkModel.PathGenerator = new Blazor.Diagrams.Core.PathGenerators.StraightPathGenerator();
+                       linkModel.Refresh();
+                   }" 
+            />
+        </div>;    
+    }
+
+    RenderFragment LinkMarkerEditor(LinkMarker? linkMarker, Action<LinkMarker> setMarker, string? optionIdentifier = null)
+    {
+        return @<div class="join w-full">
+            <input class="join-item btn btn-sm flex-1" type="radio" name="marker-options-@optionIdentifier"
+                   aria-label="Circle"
+                   checked="@(linkMarker?.Path == LinkMarker.Circle.Path)"
+                   @onclick="_ => setMarker(LinkMarker.Circle)" />
+            <input class="join-item btn btn-sm flex-1" type="radio" name="marker-options-@optionIdentifier"
+                   aria-label="Square"
+                   checked="@(linkMarker?.Path == LinkMarker.Square.Path)"
+                   @onclick="_ => setMarker(LinkMarker.Square)" />
+            <input class="join-item btn btn-sm flex-1" type="radio" name="marker-options-@optionIdentifier"
+                   aria-label="Arrow"
+                   checked="@(linkMarker?.Path == LinkMarker.Arrow.Path)"
+                   @onclick="_ => setMarker(LinkMarker.Arrow)" />
+            <input class="join-item input input-sm input-bordered flex-2" type="text"
+                   value="@linkMarker?.Path" placeholder="Customized path"
+                   @onchange="e => setMarker(new LinkMarker(e.Value?.ToString() ?? string.Empty, 10))" />
+        </div>;
+    }
+}

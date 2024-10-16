@@ -1,0 +1,8 @@
+﻿@code {
+    [Parameter] public string Label { get; set; } = "";
+    [Parameter] public RenderFragment ChildContent { get; set; } = null!;
+}
+<label class="join">
+    <label class="join-item label bg-slate-50 px-2 py-1 min-w-[120px] text-xs truncate text-ellipsis">@Label</label>
+    @ChildContent
+</label>

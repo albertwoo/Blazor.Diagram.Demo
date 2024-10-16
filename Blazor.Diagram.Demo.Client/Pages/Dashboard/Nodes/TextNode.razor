@@ -1,0 +1,20 @@
+﻿@using Blazor.Diagrams.Core.Models
+
+<div class="group relative">
+    <div class="flex flex-col items-center justify-center border-1px" style="border-color: @(Node.Selected ? Node.FontColor : "transparent"); font-size: @(Node.FontSize)px; font-weight: @Node.FontWeight; color: @Node.FontColor; @Node.ExtraStyle" >
+        @Node.Title
+    </div
+
+    @foreach (var port in Node.Ports)
+    {
+        var portCss = port.Alignment switch
+        {
+            PortAlignment.Top => "-top-2 left-[calc(50%-8px)]",
+            PortAlignment.Right => "right-[-16px] top-[calc(50%-8px)]",
+            PortAlignment.Bottom => "-bottom-2 left-[calc(50%-8px)]",
+            PortAlignment.Left => "-left-4 top-[calc(50%-8px)]",
+            _ => "",
+        };
+        <Blazor.Diagrams.Components.Renderers.PortRenderer @key="(port, Node.FontColor)" Port="port" Class=@($"w-[16px] h-[16px] rounded-full opacity-0 group-hover:opacity-50 absolute {portCss}") Style=@($"background-color: {Node.FontColor};") />
+    }
+</div>

@@ -1,0 +1,16 @@
+﻿@inherits NodeParameterComponentBase<string>
+
+@code {
+    private async Task OnFileUploaded(IBrowserFile file)
+    {
+        using var stream = new MemoryStream();
+        using var fileStream = file.OpenReadStream(1024 * 1024 * 5);
+        await fileStream.CopyToAsync(stream);
+
+        Value = Convert.ToBase64String(stream.ToArray());
+        ValueChanged?.Invoke(Value);
+    }
+}
+
+<InputFile OnChange="e => OnFileUploaded(e.File)"
+           class="file-input file-input-sm file-input-bordered" />

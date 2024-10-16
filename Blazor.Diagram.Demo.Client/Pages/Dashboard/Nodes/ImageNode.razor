@@ -1,0 +1,21 @@
+﻿@using Blazor.Diagrams.Core.Models
+
+<div class="group relative bg-transparent">
+    <img class="flex flex-col items-center justify-center border-1px @(Node.Selected ? "border-primary" : "border-transparent") object-contain select-none"
+         style="width: @(Node.Width)px; height: @(Node.Height)px;" 
+         ondragstart="event.preventDefault()"
+         src="data:image/*;base64,@Node.ImageBase64" />
+
+    @foreach (var port in Node.Ports)
+    {
+        var portCss = port.Alignment switch
+        {
+            PortAlignment.Top => "-top-2 left-[calc(50%-8px)]",
+            PortAlignment.Right => "right-[-16px] top-[calc(50%-8px)]",
+            PortAlignment.Bottom => "-bottom-2 left-[calc(50%-8px)]",
+            PortAlignment.Left => "-left-4 top-[calc(50%-8px)]",
+            _ => "",
+        };
+        <Blazor.Diagrams.Components.Renderers.PortRenderer @key="port" Port="port" Class=@($"w-[16px] h-[16px] rounded-full opacity-0 group-hover:opacity-50 absolute bg-primary {portCss}") />
+    }
+</div>

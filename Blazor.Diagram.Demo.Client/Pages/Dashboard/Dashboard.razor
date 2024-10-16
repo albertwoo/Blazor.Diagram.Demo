@@ -1,0 +1,142 @@
+﻿@page "/"
+@page "/dashboard"
+@rendermode InteractiveWebAssembly
+
+@using Blazor.Diagrams.Components.Widgets
+@using Blazor.Diagrams.Core.Models
+@using Blazor.Diagrams.Core.Routers
+@using Blazor.Diagram.Demo.Client.Pages.Dashboard.Links
+@using Blazor.Diagram.Demo.Client.Pages.Dashboard.Nodes
+
+<div class="w-full h-full relative">
+    @if (editingModel != null && isPointerReleased && diagram.GetSelectedModels().Count() == 1)
+    {
+        <div @key="editingModel" class="absolute z-10 left-4 top-[144px] bottom-6 flex flex-col rounded-md p-3 shadow-lg border-1px border-slate-200 gap-2 bg-white max-w-[300px] select-none">
+            <div class="h-full overflow-auto pr-[1px]">
+                <DashboardItemEditor EditingModel="editingModel" />
+            </div>
+            <div class="flex-shrink-0">
+                <button @onclick="CloseModelEditor" class="btn btn-primary w-full btn-sm">Close Editor</button>
+            </div>
+        </div>
+    }
+    <div class="absolute top-6 left-4 z-50 px-3 py-2 rounded-md bg-slate-10 shadow-sm opacity-90 flex flex-col gap-2 max-w-[300px] border-1px select-none bg-neutral-50">
+        <div class="join flex justify-end">
+            <input @bind-value=name placeholder="Provide the dashboard title" required class="join-item input input-bordered input-sm w-full" autofocus tabindex="0" />
+            <button class="join-item btn btn-sm btn-primary" @onclick="Save">Save</button>
+        </div>
+        <p>
+            <input @bind-value=descrition placeholder="Description" class="input hover:input-bordered input-sm w-full text-xs" />
+        </p>
+    </div>
+    <div class="absolute z-50 bottom-2 right-[230px] flex items-center gap-4 rounded-md shadow-lg border-1px border-slate-200 px-2 bg-white">
+        <div class="dropdown dropdown-hover dropdown-top dropdown-end @(diagram.Nodes.Count == 0 ? "dropdown-open" : "")">
+            <div tabindex="0" role="button" class="flex items-center gap-1 label-text text-slate-600">
+                Usage Tips
+            </div>
+            <ul tabindex="0" class="dropdown-content z-[1] menu p-3 shadow-lg bg-base-100 rounded-md w-[300px] border-1px border-information-400 text-slate-700">
+                <li>- Right click on the dashboard to check what you can do</li>
+                <li>- Click items to edit its property</li>
+                <li>- SHIFT + Drag to select multiple items</li>
+            </ul>
+        </div>
+        <label class="label cursor-pointer gap-1">
+            <span class="label-text text-slate-600">Show Grid</span>
+            <InputCheckbox class="toggle toggle-sm toggle-primary" @bind-Value="showGrid" @bind-Value:after="() => diagram.Refresh()" />
+        </label>
+    </div>
+    <ContextMenuTrigger MenuId="dashboardMenu" CssClass="w-full h-full">
+        <CascadingValue Value="diagram" IsFixed="true">
+            <DiagramCanvas>
+                <Widgets>
+			        <SelectionBoxWidget />
+                    @if (showGrid)
+                    {
+                        <GridWidget Size="24" Mode="GridMode.Line" BackgroundColor="transparent" />
+                    }
+                    <NavigatorWidget Width="200" Height="120" Class="border-1px border-slate-200 bg-white absolute bottom-2 right-2 shadow-md" />
+		        </Widgets>
+            </DiagramCanvas>
+        </CascadingValue>
+    </ContextMenuTrigger>
+</div>
+
+@if (true) {
+    var selectedItems = diagram.GetSelectedModels().ToList();
+    var selectedNodeCount = selectedItems.Where(x => x is NodeModelBase).Count();
+
+    <ContextMenu Id="dashboardMenu" ShownCssClass="rounded-md shadow-lg border-1px border-slate-100">
+        <Item OnClick="e => AddNode(e, new TextNodeModel())">
+            <div class="flex items-center gap-2">
+                Add Text
+            </div>
+        </Item>
+        <Item OnClick="e => AddNode(e, new UrlNodeModel())">
+            <div class="flex items-center gap-2">
+                Add Url
+            </div>
+        </Item>
+        <Item OnClick="e => AddNode(e, new ImageNodeModel())">
+            <div class="flex items-center gap-2">
+                Add Image
+            </div>
+        </Item>
+        <Item OnClick="e => AddNode(e, new EmbedNodeModel())">
+            <div class="flex items-center gap-2">
+                Add Embed
+            </div>
+        </Item>
+        <div class="divider my-0"></div>
+        <Item OnClick="e => PasteSelectedItems(e)" Enabled="(selectedNodeCount > 0)">
+            <div class="flex items-center gap-2">
+                Paste Items
+            </div>
+        </Item>
+        <Item OnClick="DeleteSelectedItems" Enabled="(selectedItems.Count > 0)">
+            <div class="flex items-center gap-2">
+                Delete Items
+            </div>
+        </Item>
+        <div class="divider my-0"></div>
+        <Item OnClick="AlignToTop" Enabled="(selectedNodeCount > 1)">
+            <div class="flex items-center gap-2">
+                Align To Top
+            </div>
+        </Item>
+        <Item OnClick="AlignToBottom" Enabled="(selectedNodeCount > 1)">
+            <div class="flex items-center gap-2">
+                Align To Bottom
+            </div>
+        </Item>
+        <Item OnClick="AlignToLeft" Enabled="(selectedNodeCount > 1)">
+            <div class="flex items-center gap-2">
+                Align To Left
+            </div>
+        </Item>
+         <Item OnClick="AlignToRight" Enabled="(selectedNodeCount > 1)">
+            <div class="flex items-center gap-2">
+                Align To Right
+            </div>
+        </Item>
+    </ContextMenu>
+}
+
+@if (isLoading)
+{
+    <div class="z-50 fixed top-0 left-0 right-0 bottom-0 flex items-center justify-center bg-neutral-400/80">
+        <progress class="w-[300px] progress progress-primary"></progress>
+    </div>
+}
+
+<style>
+    .diagram-canvas > div.grid {
+        background-image: linear-gradient(rgba(211, 211, 211, 0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(211, 211, 211, 0.5) 1px, transparent 1px) !important;
+    }
+
+    @StyledLinkModel.MakeDefaultStyleClass()
+
+    @foreach (var (_, value) in customizedLinkStyle)
+    {
+        @value
+    }
+</style>

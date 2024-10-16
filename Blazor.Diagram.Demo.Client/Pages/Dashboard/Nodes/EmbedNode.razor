@@ -1,0 +1,35 @@
+﻿@using Blazor.Diagrams.Core.Models
+
+<div class="group bg-transparent relative">
+    @if (Node.Inline)
+    {
+        <div class="border-2px @(Node.Selected ? "border-primary" : "border-transparent") group-hover:border-primary p-0 shadow-md rounded-lg bg-base-100 overflow-hidden">
+            @((MarkupString)(Node.EmbedContent ?? ""))
+        </div>
+    }
+    else
+    {
+        <div class="border-2px @(Node.Selected ? "border-primary" : "border-transparent") group-hover:border-primary p-1 dropdown @(Node.IsOpen ? "dropdown-open" : "") ">
+            <div class="flex flex-col items-center justify-center" style="font-size: @(Node.FontSize)px; font-weight: @Node.FontWeight; color: @Node.FontColor; @Node.ExtraStyle"
+                 @onclick="_ => Node.IsOpen = !Node.IsOpen">
+                @(string.IsNullOrEmpty(Node.Title) ? "Embed Node" : Node.Title)
+            </div>
+            <div class="shadow-md dropdown-content z-50 p-0 overflow-hidden bg-base-100 rounded-lg">
+                @((MarkupString)(Node.EmbedContent ?? ""))
+            </div>
+        </div>
+    }
+
+    @foreach (var port in Node.Ports)
+    {
+        var portCss = port.Alignment switch
+        {
+            PortAlignment.Top => "-top-2 left-[calc(50%-8px)]",
+            PortAlignment.Right => "right-[-16px] top-[calc(50%-8px)]",
+            PortAlignment.Bottom => "-bottom-2 left-[calc(50%-8px)]",
+            PortAlignment.Left => "-left-4 top-[calc(50%-8px)]",
+            _ => "",
+        };
+        <Blazor.Diagrams.Components.Renderers.PortRenderer @key="(port, Node.FontColor)" Port="port" Class=@($"w-[16px] h-[16px] rounded-full opacity-0 bg-primary group-hover:opacity-50 absolute {portCss}") Style=@($"background-color: {Node.FontColor};") />
+    }
+</div>
